@@ -1,0 +1,43 @@
+!IF [where /Q Makefile.auto.win]
+# The file doesn't exist, so don't include it.
+!ELSE
+!INCLUDE Makefile.auto.win
+!IF [del /Q /F Makefile.auto.win] == 0
+!ENDIF
+!ENDIF
+
+CC=cl
+CFLAGS = /O2
+LINK=link
+NMAKE = nmake /$(MAKEFLAGS)
+
+!IFNDEF MIX_ENV
+MIX_ENV = dev
+!ENDIF
+
+BUILDPATH = priv\$(MIX_ENV)
+
+LIBS = ws2_32.lib
+
+all: $(BUILDPATH) Makefile.auto.win $(BUILDPATH)\echo.exe
+
+SRCS = src\echo.c
+
+Makefile.auto.win:
+	erl -eval "io:format(\"~s~n\", [lists:concat([\"ERTS_INCLUDE_PATH=\", code:root_dir(), \"/erts-\", erlang:system_info(version), \"/include\"])])" -s init stop -noshell > $@
+
+$(BUILDPATH):
+	mkdir $(BUILDPATH)
+
+!IFDEF ERTS_INCLUDE_PATH
+$(BUILDPATH)\echo.exe: $(SRCS)
+	$(CC) $(ERL_CFLAGS) $(CFLAGS) /I"$(ERTS_INCLUDE_PATH)" /MD /Fo:$(BUILDPATH)\ /Fe:$@ $(SRCS) $(LIBS)
+!ELSE
+$(BUILDPATH)\echo.exe: Makefile.auto.win
+	$(NMAKE) /F Makefile.win $@
+!ENDIF
+
+clean:
+	del /Q /F priv\dev
+	del /Q /F priv\test
+	del /Q /F priv\prod
