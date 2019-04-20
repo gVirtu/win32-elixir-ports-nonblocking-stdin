@@ -47,6 +47,8 @@ void write_back(char* buffer) {
 
     write_fixed(size_header, 2);
     write_fixed(buffer, len);
+
+    fflush(stdout);
 }
 
 // Decodes 2-byte message header containing the payload size (little endian)
